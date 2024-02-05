@@ -16,7 +16,7 @@ function createWindow() {
 
     // routes
     ipcMain.on('login-data', async (event, cpf, senha) => {
-        const response = await doLogin(cpf, senha);
+        const response = await doLogin(cpf.replace(/\.|-/gm, ''), senha);
         const data = await response.json();
         event.sender.send('save-token-in-local-storage', data.access_token);
         event.reply('login-response', response.ok, response.ok ? '' : 'Login inválido');
