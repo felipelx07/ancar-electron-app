@@ -1,0 +1,15 @@
+{
+  "name": "electron-app",
+  "version": "1.0.0",
+  "main": "app/main.js",
+  "scripts": {
+    "start": "electron . --trace-warnings"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.2.1"
+  },
+  "dependencies": {
+    "electron-fetch": "^1.9.1"
+  }
+}

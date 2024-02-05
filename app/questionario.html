@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questionários</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</head>
+<body class="container">
+<h1 style="margin-bottom: 5rem">Questionários</h1>
+
+<ul id="list-questionarios"></ul>
+
+<script>
+    const { ipcRenderer } = require('electron');
+    ipcRenderer.send('listar-questionarios');
+
+    ipcRenderer.on('carregar-listar-html', (event, questionarios) => {
+        const list = document.getElementById('list-questionarios');
+        questionarios.forEach(questionario => {
+            const item = document.createElement('li');
+            item.innerHTML = `
+          <h3>${questionario.nome}</h3>
+          <p>${questionario.descricao}</p>
+          <p>Criado em: ${questionario.data}</p>
+          <button class="btn waves-effect waves-light" onclick="openQuestionnaireResponse('${questionario.id}')">Responder</button>
+        `;
+            list.appendChild(item);
+        });
+    });
+
+    function openQuestionnaireResponse(questionnaireId) {
+        ipcRenderer.send('open-questionario', questionnaireId);
+    }
+</script>
+</body>
+</html>

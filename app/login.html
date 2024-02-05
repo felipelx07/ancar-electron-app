@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</head>
+<body class="container">
+<h1>Login</h1>
+<form id="login-form" class="row">
+    <div class="input-field col s12">
+        <input type="text" id="cpf" name="cpf" required>
+        <label for="cpf">CPF</label>
+    </div>
+    <div class="input-field col s12">
+        <input type="password" id="senha" name="senha" required>
+        <label for="senha">Senha</label>
+    </div>
+    <div class="col s12">
+        <button type="submit" class="btn waves-effect waves-light">Entrar</button>
+    </div>
+</form>
+<script>
+    const { ipcRenderer } = require('electron')
+    const form = document.getElementById('login-form');
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const cpf = document.getElementById('cpf').value;
+        const senha = document.getElementById('senha').value;
+        ipcRenderer.send('login-data', cpf, senha);
+
+        ipcRenderer.on('save-token-in-local-storage', (event, token) => {
+            localStorage.setItem('token', token);
+        });
+
+        ipcRenderer.on('login-response', (event, success, message) => {
+            if (success) {
+                ipcRenderer.send('open-questionario-page');
+            } else {
+                alert(message);
+            }
+        });
+    });
+</script>
+</body>
+</html>

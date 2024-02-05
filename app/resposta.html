@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responder Questionário</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</head>
+<body class="container">
+<div id="questionnaire-info">
+    <h2>${questionnaire.nome}</h2>
+    <p>${questionnaire.descricao}</p>
+</div>
+
+<form id="questionnaire-form">
+    <ul id="questions-list"></ul>
+
+    <button class="btn waves-effect waves-light" type="button" onclick="openQuestionnairesList()">Voltar</button>
+    <button class="btn waves-effect waves-light" type="submit">Salvar Respostas</button>
+</form>
+
+<script>
+    const {ipcRenderer} = require('electron');
+
+    // Obter ID do questionário da URL
+    const questionnaireId = new URLSearchParams(window.location.search).get('questionnaireId');
+
+    // Obter dados do questionário do processo principal
+    ipcRenderer.send('get-questionario-info', questionnaireId);
+
+    // Ouvir resposta do processo principal com os dados do questionário
+    ipcRenderer.on('load-questionario-info-html', (event, questionnaire) => {
+        // Renderizar informações do questionário na tela
+        const info = document.getElementById('questionnaire-info');
+        info.innerHTML = `
+        <h2>${questionnaire.nome}</h2>
+        <p style="margin-bottom: 3rem">${questionnaire.descricao}</p>
+      `;
+
+        // Renderizar perguntas e respostas na tela
+        const list = document.getElementById('questions-list');
+        questionnaire.perguntas.forEach(pergunta => {
+            const questionElement = document.createElement('li');
+            questionElement.innerHTML = `
+          <h5>${questionnaire.perguntas.indexOf(pergunta) + 1} - ${pergunta.descricao}</h5>
+          <input type="text" placeholder="Escreva aqui sua resposta..." id="question-${pergunta.id}" name="question-${pergunta.id}" value="" />
+        `;
+            ipcRenderer.send('get-resposta-info', questionnaireId, pergunta.id);
+            list.appendChild(questionElement);
+        });
+    });
+
+    ipcRenderer.on('load-resposta-info-html', (event, idQuestionario, respostas) => {
+        console.log(JSON.stringify(respostas));
+        respostas.map(resposta => {
+            console.log('resposta: '+JSON.stringify(resposta));
+            if (resposta.descricao && idQuestionario === questionnaireId)
+            document.getElementById(`question-${resposta.perguntaId}`).value = resposta.descricao;
+        })
+    });
+
+    ipcRenderer.on('save-response', (event, success, message) => {
+        if (success) {
+            alert('Respostas salvas com sucesso!');
+        } else {
+            alert(message);
+        }
+    });
+
+    // Salvar respostas do usuário
+    document.getElementById('questionnaire-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const respostas = Array.from(document.querySelectorAll('input[type="text"]')).map(input => {
+            const questionId = input.name.split('-')[1];
+            return {
+                perguntaId: questionId,
+                descricao: input.value,
+            };
+        });
+        const token = localStorage.getItem('token');
+        ipcRenderer.send('save-resposta', questionnaireId, respostas, token);
+    });
+
+    function openQuestionnairesList() {
+        ipcRenderer.send('open-questionario-page');
+    }
+</script>
+</body>
+</html>
